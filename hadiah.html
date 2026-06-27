@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
+    />
+    <title>Sebuah hadiah untukmu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Karla:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ============================================================= -->
+    <!--  CARA GANTI ISI:  scroll ke paling bawah, cari "const CONFIG"  -->
+    <!--  Di situ kamu tinggal ganti nama, ucapan, dan foto.            -->
+    <!-- ============================================================= -->
+
+    <style>
+      :root {
+        --bg-0: #150f1c;
+        --bg-1: #241a30;
+        --bg-2: #2f2138;
+        --cream: #f4ece2;
+        --cream-dim: rgba(244, 236, 226, 0.55);
+        --cream-faint: rgba(244, 236, 226, 0.32);
+        --gold: #e3b88a;
+        --gold-soft: rgba(227, 184, 138, 0.45);
+        --frame: #f7f1e9;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: "Karla", system-ui, sans-serif;
+        background:
+          radial-gradient(
+            120% 90% at 50% 18%,
+            rgba(227, 184, 138, 0.1),
+            transparent 55%
+          ),
+          radial-gradient(
+            140% 120% at 50% 120%,
+            var(--bg-2),
+            var(--bg-1) 45%,
+            var(--bg-0) 100%
+          );
+        color: var(--cream);
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+
+      /* lapisan belakang */
+      .bg {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* foto-foto melayang dari folder assets */
+      .bgcard {
+        position: absolute;
+        background: var(--frame);
+        padding: 6px 6px 9px;
+        border-radius: 3px;
+        box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.85);
+        filter: blur(1.4px);
+        will-change: transform, opacity;
+        animation: floatUp linear infinite;
+      }
+      .bgcard img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4/5;
+        object-fit: cover;
+        border-radius: 2px;
+      }
+      @keyframes floatUp {
+        0% {
+          transform: translateY(112vh) translateX(var(--x0)) rotate(var(--r0));
+          opacity: 0;
+        }
+        14% {
+          opacity: var(--op);
+        }
+        86% {
+          opacity: var(--op);
+        }
+        100% {
+          transform: translateY(-32vh) translateX(var(--x1)) rotate(var(--r1));
+          opacity: 0;
+        }
+      }
+
+      /* selubung biar teks depan tetap kebaca */
+      .veil {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: radial-gradient(
+          120% 90% at 50% 42%,
+          rgba(21, 15, 28, 0.3),
+          rgba(21, 15, 28, 0.82) 78%
+        );
+      }
+
+      /* bokeh cadangan (kepakai kalau folder assets masih kosong) */
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(255, 225, 190, 0.9),
+          rgba(227, 184, 138, 0.25) 45%,
+          transparent 70%
+        );
+        filter: blur(2px);
+        opacity: 0;
+        animation: drift linear infinite;
+      }
+      @keyframes drift {
+        0% {
+          transform: translateY(20vh) translateX(0) scale(0.7);
+          opacity: 0;
+        }
+        12% {
+          opacity: 0.55;
+        }
+        88% {
+          opacity: 0.4;
+        }
+        100% {
+          transform: translateY(-25vh) translateX(var(--dx)) scale(1.1);
+          opacity: 0;
+        }
+      }
+
+      /* layar utama */
+      .stage {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: clamp(24px, 6vw, 56px);
+        cursor: pointer;
+      }
+
+      .scene {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition:
+          opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+          filter 0.9s ease;
+      }
+      .scene.enter {
+        opacity: 0;
+        transform: translateY(22px) scale(0.985);
+        filter: blur(8px);
+      }
+      .scene.leave {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.98);
+        filter: blur(6px);
+      }
+
+      /* eyebrow kecil */
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 600;
+        margin-bottom: 22px;
+        opacity: 0.9;
+      }
+
+      /* ucapan — ukuran menyesuaikan panjang teks biar selalu muat 1 layar.
+         tier dasar = pendek & dramatis; makin panjang makin kecil + line tinggi. */
+      .words {
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-weight: 500;
+        font-size: clamp(26px, 7vw, 38px);
+        line-height: 1.32;
+        color: var(--cream);
+        max-width: min(90vw, 20ch);
+        text-wrap: balance;
+      }
+      .words.medium {
+        font-size: clamp(23px, 5.8vw, 31px);
+        line-height: 1.4;
+        max-width: min(90vw, 26ch);
+      }
+      .words.long {
+        font-size: clamp(20px, 4.9vw, 27px);
+        line-height: 1.46;
+        max-width: min(92vw, 32ch);
+      }
+      .words.xlong {
+        font-size: clamp(17.5px, 4.2vw, 23px);
+        line-height: 1.5;
+        max-width: min(92vw, 36ch);
+      }
+
+      /* penutup: ALL-CAPS, jadi non-italic + letter-spacing biar kebaca hangat */
+      .words.closing {
+        font-style: normal;
+        font-weight: 500;
+        letter-spacing: 0.012em;
+        word-spacing: 0.04em;
+        font-size: clamp(16.5px, 4vw, 22px);
+        line-height: 1.52;
+        max-width: min(92vw, 30ch);
+      }
+
+      /* intro */
+      .intro-title {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 500;
+        font-size: clamp(34px, 9vw, 58px);
+        line-height: 1.1;
+        margin: 6px 0 8px;
+      }
+      .intro-title em {
+        font-style: italic;
+        color: var(--gold);
+      }
+      .intro-sub {
+        font-size: 14px;
+        color: var(--cream-dim);
+        max-width: 26ch;
+        line-height: 1.6;
+        margin-bottom: 34px;
+      }
+
+      .btn {
+        font-family: "Karla", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--bg-0);
+        background: var(--gold);
+        border: none;
+        border-radius: 100px;
+        padding: 16px 34px;
+        cursor: pointer;
+        box-shadow: 0 14px 30px -10px rgba(227, 184, 138, 0.6);
+        transition:
+          transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 0.3s ease,
+          background 0.3s ease;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 36px -10px rgba(227, 184, 138, 0.75);
+      }
+      .btn:focus-visible {
+        outline: 2px solid var(--cream);
+        outline-offset: 4px;
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      /* hint + progress */
+      .hint {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 30px;
+        z-index: 3;
+        text-align: center;
+        font-size: 11px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--cream-faint);
+        pointer-events: none;
+        transition: opacity 0.6s ease;
+      }
+      .hint .tap {
+        animation: pulse 2.4s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 0.85;
+        }
+      }
+
+      .dots {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 26px;
+        z-index: 3;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        transition: opacity 0.6s ease;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--cream-faint);
+        transition: all 0.5s ease;
+      }
+      .dot.on {
+        background: var(--gold);
+        width: 18px;
+        border-radius: 3px;
+      }
+
+      .hide {
+        opacity: 0 !important;
+      }
+
+      /* tombol mute/unmute — emas tipis, pojok kanan-bawah, di atas hint & dots */
+      .mute {
+        position: fixed;
+        right: 22px;
+        bottom: 24px;
+        z-index: 4;
+        width: 42px;
+        height: 42px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(21, 15, 28, 0.45);
+        border: 1px solid var(--gold-soft);
+        color: var(--gold);
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        opacity: 0;
+        transition:
+          opacity 0.6s ease,
+          transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 0.3s ease;
+      }
+      .mute.show {
+        display: flex;
+        opacity: 0.85;
+      }
+      .mute:hover {
+        opacity: 1;
+        transform: translateY(-2px);
+        border-color: var(--gold);
+      }
+      .mute:focus-visible {
+        outline: 2px solid var(--cream);
+        outline-offset: 3px;
+      }
+      .mute:active {
+        transform: translateY(0);
+      }
+      .mute svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+      }
+
+      /* penutup */
+      .sign {
+        margin-top: 26px;
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 600;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .orb {
+          display: none;
+        }
+        .bgcard {
+          animation: none;
+        }
+        .scene {
+          transition: opacity 0.4s ease;
+        }
+        .scene.enter,
+        .scene.leave {
+          transform: none;
+          filter: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" id="bg"></div>
+    <div class="veil"></div>
+
+    <div class="dots" id="dots"></div>
+    <main
+      class="stage"
+      id="stage"
+      role="button"
+      tabindex="0"
+      aria-label="Ketuk untuk lanjut"
+    ></main>
+    <div class="hint" id="hint"></div>
+    <button
+      class="mute"
+      id="mute"
+      type="button"
+      aria-label="Bisukan musik"
+      aria-pressed="false"
+    ></button>
+
+    <script>
+      /* ================================================================
+   ✏️  GANTI BAGIAN INI  — ini satu-satunya yang perlu kamu ubah
+   ================================================================
+
+   Foto melayang di belakang otomatis dari folder "assets/" (lihat "fotoSemua").
+   Tiap momen sekarang cuma teks ucapan — nggak ada foto di tengah lagi,
+   jadi field "foto" di tiap momen diabaikan (boleh dibiarkan kosong "").
+
+   Mau tambah / kurang momen? Tinggal tambah / hapus baris
+   { foto: "", ucapan: "..." }, di dalam "momen".
+*/
+
+      const CONFIG = {
+        namaDia: "Sayang", // panggilan buat dia
+        dariKamu: "Aku", // tanda tangan di akhir
+
+        // foto-foto yang melayang di belakang (otomatis dari folder "assets/").
+        // urutannya diacak tiap kali dibuka — kamu nggak perlu ngutak-atik ini.
+        fotoSemua: [
+          "assets/WhatsApp Image 2026-06-27 at 22.34.37.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.38 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.38.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.39.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.45.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.46 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.46 (2).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.46.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.47 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.47.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.48 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.48 (2).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.48.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.50.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.51 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.51.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.34.52.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.38.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.40.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.41 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.41.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.42.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.44 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.44 (2).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.44.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.45 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.45.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.47 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.47 (2).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.47.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.48 (1).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.48 (2).jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.48.jpeg",
+          "assets/WhatsApp Image 2026-06-27 at 22.36.49.jpeg",
+        ],
+
+        // musik latar (taruh file di folder "assets/"). mulai pas tombol "Buka".
+        // kosongin "" kalau nggak mau musik — tombol mute-nya ikut sembunyi.
+        musik: "assets/song.mp3",
+        musikVolume: 0.35, // 0 = senyap, 1 = penuh
+
+        introSub:
+          "Pelan-pelan aja bukanya. Tiap ketukan, ada satu hal yang pengen aku ceritain.",
+
+        momen: [
+          {
+            foto: "",
+            ucapan:
+              "Sayang, terimakasih kamu waktu itu mau ngikut main billiard, walaupun aku tau kamu balik malem-malem naik motor sendirian, tapi hari itu aku ngerasain kehangatan yang pertama dari kita",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Ay, makasih udah mau bertahan dengan aku, aku tau kamu ada berjuta-juta alasan untuk selesai, tapi kamu masih bertahan, makasih ya :)",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Tahun ini cukup baru buat kita, mengurusi ini itu, terlihat jelas watak dan sifat masing-masing. Semoga perubahan kita dan harapan kita di ridhoi oleh Allah, Aamiin. Menikah lalu bahagia berdua sampai nanti...",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Semoga kita bisa menikah, bahagia, mencapai financial freedom, punyak anak yang sholeh dan sholeha, Aamiin",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Aku sayaaaaaaaaaaaaang banget sama kau ay, aku mau kamu sehat terussss, bahagia terussss, makan sayur, buah, dan minum air putih yang rutin",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Aku mau kamu sehat terus, biar kita bisa sama-sama terus ayy, aku sayang banget sama kamu",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Aku ga tau kalo Allah ga temuin kamu sama aku, aku bakal jadi seburuk apa, terimakasih ya Allah.",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Maaf, untuk sekarang ini aku belum bisa kasih apa-apa ya ay :(, aku akan usahakan agar aku bisa buat kamu bahagia selalu, agar kehidupan kita bisa tenang dari segi ekonomi dan lainnya, Aamiin.",
+          },
+          {
+            foto: "",
+            ucapan:
+              "Semoga Allah, selalu berikan kesehatan ke kamu ay, dijauhkan dari marabahaya, dilancarkan rizekinya, sehat selalu, dan diberikan kepekaan akan setiap kejadian yang diberikan, Aamiin Ya Rabb.",
+          },
+          {
+            foto: "",
+            ucapan:
+              "dan Semoga Allah, Berikan kita ridho, ketenangan, keihklasan, dan meredam rasa sombong, fasik, dan munafik didiri kita, Aamiin.",
+          },
+          {
+            foto: "",
+            ucapan:
+              "I Love You sayang, aku sangat bersyukur kamu ada di dunia ini, dan kita bertemu, aku sayang kamu.",
+          },
+        ],
+
+        penutup: {
+          foto: "", // foto kalian berdua
+          ucapan:
+            "Gua tau ini norak, tapi gua gelisah bet njer, kaga ngasih apa apa, YA ALLAH, NANTI KALAU AKU UDAH ADA REZEKI YA AYYYY, AKU JAJANIN KAMU SAMPE MBELENDUNG :)",
+        },
+      };
+
+      /* ================================================================
+   Di bawah ini nggak perlu diutak-atik 🙂
+   ================================================================ */
+
+      const stage = document.getElementById("stage");
+      const hint = document.getElementById("hint");
+      const dotsC = document.getElementById("dots");
+      const muteBtn = document.getElementById("mute");
+
+      // ---- musik latar ----------------------------------------------------
+      // dibikin cuma kalau CONFIG.musik diisi (graceful: kosong = no audio/no btn)
+      const SPK_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>`;
+      const SPK_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>`;
+
+      const audio = CONFIG.musik && CONFIG.musik.trim() ? new Audio() : null;
+      let musicStarted = false;
+      if (audio) {
+        audio.src = CONFIG.musik;
+        audio.loop = true;
+        audio.preload = "auto";
+        audio.setAttribute("playsinline", "");
+        audio.volume = 0;
+        muteBtn.innerHTML = SPK_ON;
+      }
+      const targetVol = Math.max(0, Math.min(1, CONFIG.musikVolume ?? 0.35));
+
+      function startMusic() {
+        if (!audio || musicStarted) return; // replay/Buka ulang tidak me-restart
+        musicStarted = true;
+        muteBtn.classList.add("show");
+        audio.volume = 0;
+        audio.currentTime = 0; // loop selalu dari awal lagu
+        const p = audio.play();
+        if (p && p.catch) p.catch(() => {});
+
+        const reduce = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (reduce) {
+          audio.volume = targetVol; // tanpa ramp
+          return;
+        }
+        // fade-in halus 0 -> targetVol (~1.5s)
+        const dur = 1500;
+        const t0 = performance.now();
+        (function ramp(now) {
+          const k = Math.min(1, (now - t0) / dur);
+          audio.volume = targetVol * k;
+          if (k < 1) requestAnimationFrame(ramp);
+          else audio.volume = targetVol; // mendarat pas di target
+        })(t0);
+      }
+
+      if (audio) {
+        muteBtn.onclick = (e) => {
+          e.stopPropagation();
+          audio.muted = !audio.muted;
+          muteBtn.innerHTML = audio.muted ? SPK_OFF : SPK_ON;
+          muteBtn.setAttribute("aria-pressed", String(audio.muted));
+          muteBtn.setAttribute(
+            "aria-label",
+            audio.muted ? "Nyalakan musik" : "Bisukan musik",
+          );
+        };
+      }
+
+      // slides: [0]=intro, lalu tiap momen, lalu penutup
+      const slides = [{ type: "intro" }]
+        .concat(CONFIG.momen.map((m) => ({ type: "moment", ...m })))
+        .concat([{ type: "final", ...CONFIG.penutup }]);
+
+      let idx = 0,
+        busy = false;
+
+      // progress dots (intro tidak dihitung)
+      const total = slides.length - 1;
+      for (let i = 0; i < total; i++) {
+        const d = document.createElement("div");
+        d.className = "dot";
+        dotsC.appendChild(d);
+      }
+      function paintDots() {
+        const dots = dotsC.children;
+        for (let i = 0; i < dots.length; i++)
+          dots[i].classList.toggle("on", i === idx - 1);
+        dotsC.classList.toggle("hide", idx === 0);
+      }
+
+      // pilih tier ukuran berdasar panjang teks (deterministik, no thrash)
+      function sizeClass(text) {
+        const n = (text || "").length;
+        if (n <= 100) return ""; // pendek = besar & dramatis
+        if (n <= 150) return " medium";
+        if (n <= 200) return " long";
+        return " xlong";
+      }
+
+      function render(s) {
+        if (s.type === "intro") {
+          return `<div class="scene enter">
+      <div class="eyebrow">Sebuah hadiah</div>
+      <h1 class="intro-title">Untuk <em>${CONFIG.namaDia}</em></h1>
+      <p class="intro-sub">${CONFIG.introSub}</p>
+      <button class="btn" id="startBtn">Buka</button>
+    </div>`;
+        }
+        if (s.type === "final") {
+          return `<div class="scene final enter">
+      <div class="eyebrow">Akhirnya</div>
+      <p class="words closing">${s.ucapan}</p>
+      <div class="sign">— ${CONFIG.dariKamu}</div>
+      <button class="btn" id="againBtn" style="margin-top:30px">Ulang dari awal</button>
+    </div>`;
+        }
+        return `<div class="scene enter">
+    <p class="words${sizeClass(s.ucapan)}">${s.ucapan}</p>
+  </div>`;
+      }
+
+      function mount() {
+        stage.innerHTML = render(slides[idx]);
+        requestAnimationFrame(() => {
+          const sc = stage.querySelector(".scene");
+          sc && sc.classList.remove("enter");
+        });
+        paintDots();
+        updateHint();
+        const start = document.getElementById("startBtn");
+        if (start)
+          start.onclick = (e) => {
+            e.stopPropagation();
+            startMusic(); // wajib di-trigger dari gesture (autoplay diblokir)
+            go();
+          };
+        const again = document.getElementById("againBtn");
+        if (again)
+          again.onclick = (e) => {
+            e.stopPropagation();
+            idx = 0;
+            busy = false;
+            mount();
+          };
+      }
+
+      function updateHint() {
+        const s = slides[idx];
+        if (s.type === "intro" || s.type === "final") {
+          hint.classList.add("hide");
+          return;
+        }
+        hint.classList.remove("hide");
+        hint.innerHTML = `<span class="tap">ketuk di mana saja</span>`;
+      }
+
+      function go() {
+        if (busy || idx >= slides.length - 1) return;
+        busy = true;
+        const cur = stage.querySelector(".scene");
+        cur && cur.classList.add("leave");
+        setTimeout(() => {
+          idx++;
+          mount();
+          busy = false;
+        }, 620);
+      }
+
+      stage.addEventListener("click", () => {
+        const s = slides[idx];
+        if (s.type === "intro" || s.type === "final") return; // pakai tombol
+        go();
+      });
+      stage.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          const s = slides[idx];
+          if (s.type === "intro") {
+            go();
+          } else if (s.type !== "final") {
+            go();
+          }
+        }
+      });
+
+      // lapisan belakang: foto melayang, atau bokeh kalau belum ada foto
+      (function () {
+        const wrap = document.getElementById("bg");
+        const reduce = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        const all = (CONFIG.fotoSemua || []).filter((s) => s && s.trim());
+        // acak urutan tiap load (Fisher–Yates) biar pilihan foto beda tiap buka
+        const imgs = all.slice();
+        for (let i = imgs.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
+        }
+        const rnd = (a, b) => a + Math.random() * (b - a);
+
+        if (imgs.length) {
+          // foto = elemen visual utama sekarang; kartu distinct (count < jumlah foto)
+          const count = reduce
+            ? Math.min(imgs.length, 7)
+            : Math.min(imgs.length, 16);
+          for (let i = 0; i < count; i++) {
+            const src = imgs[i % imgs.length];
+            const card = document.createElement("div");
+            card.className = "bgcard";
+            const w = rnd(78, 150);
+            card.style.width = w + "px";
+            card.style.left = rnd(-4, 92) + "vw";
+            card.style.setProperty("--op", rnd(0.14, 0.28).toFixed(2));
+            card.style.setProperty("--x0", rnd(-40, 40).toFixed(0) + "px");
+            card.style.setProperty("--x1", rnd(-40, 40).toFixed(0) + "px");
+            card.style.setProperty("--r0", rnd(-9, 9).toFixed(1) + "deg");
+            card.style.setProperty("--r1", rnd(-9, 9).toFixed(1) + "deg");
+            if (reduce) {
+              card.style.animation = "none";
+              card.style.top = rnd(2, 80) + "vh";
+              card.style.opacity = 0.2;
+              card.style.transform = "rotate(" + rnd(-6, 6).toFixed(1) + "deg)";
+            } else {
+              card.style.animationDuration = rnd(26, 46).toFixed(1) + "s";
+              card.style.animationDelay = (-rnd(0, 40)).toFixed(1) + "s";
+            }
+            const img = document.createElement("img");
+            img.src = src;
+            img.alt = "";
+            img.onerror = () => {
+              card.remove();
+            };
+            card.appendChild(img);
+            wrap.appendChild(card);
+          }
+          return;
+        }
+
+        // fallback: bokeh
+        const N = reduce ? 0 : 14;
+        for (let i = 0; i < N; i++) {
+          const o = document.createElement("div");
+          o.className = "orb";
+          const sz = 6 + Math.random() * 16;
+          o.style.width = o.style.height = sz + "px";
+          o.style.left = Math.random() * 100 + "vw";
+          o.style.setProperty("--dx", Math.random() * 60 - 30 + "px");
+          o.style.animationDuration = 11 + Math.random() * 12 + "s";
+          o.style.animationDelay = -Math.random() * 16 + "s";
+          wrap.appendChild(o);
+        }
+      })();
+
+      mount();
+    </script>
+  </body>
+</html>
